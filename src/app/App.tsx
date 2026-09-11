@@ -6,6 +6,7 @@ import ChunkLoader from '@/components/loader/chunk-loader';
 import LocalStorageSyncWrapper from '@/components/localStorage-sync-wrapper';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import SplashScreen from '@/components/splash-screen/splash-screen';
+import LoginPage from '@/components/login-page/login-page';
 import { useAccountSwitching } from '@/hooks/useAccountSwitching';
 import { useLanguageFromURL } from '@/hooks/useLanguageFromURL';
 import { StoreProvider } from '@/hooks/useStore';
@@ -17,7 +18,6 @@ import './app-root.scss';
 
 const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
-const LoginPage = lazy(() => import('../components/login-page/login-page'));
 
 const LanguageHandler = ({ children }: { children: React.ReactNode }) => {
     useLanguageFromURL();
@@ -91,15 +91,25 @@ const router = createBrowserRouter(
 
 function App() {
     useAccountSwitching();
-    const [splashDone, setSplashDone] = useState(() => {
-        return sessionStorage.getItem('splash_seen') === 'true';
+
+    const [phase, setPhase] = useState<'splash' | 'login' | 'app'>(() => {
+        const splashSeen = sessionStorage.getItem('splash_seen') === 'true';
+        const loggedIn = localStorage.getItem('active_loginid');
+        if (splashSeen && loggedIn) return 'app';
+        if (splashSeen) return 'login';
+        return 'splash';
     });
 
     const handleSplashComplete = useCallback(() => {
         sessionStorage.setItem('splash_seen', 'true');
-        setSplashDone(true);
+        setPhase('login');
     }, []);
 
+    const handleLoginSuccess = useCallback(() => {
+        setPhase('app');
+    }, []);
+
+    // Handle OAuth callback (redirect back from Deriv)
     React.useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         if (!urlParams.has('code')) return;
@@ -125,6 +135,8 @@ function App() {
 
                     const { api_base } = await import('@/external/bot-skeleton');
                     await api_base.init(true);
+
+                    setPhase('app');
                 } else {
                     console.error('No accounts returned after authentication');
                 }
@@ -138,10 +150,17 @@ function App() {
         handleCallback();
     }, []);
 
-    if (!splashDone) {
+    // Phase 1: Splash screen
+    if (phase === 'splash') {
         return <SplashScreen onComplete={handleSplashComplete} />;
     }
 
+    // Phase 2: Login page
+    if (phase === 'login') {
+        return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    }
+
+    // Phase 3: Main app
     return <RouterProvider router={router} />;
 }
 

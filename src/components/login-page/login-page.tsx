@@ -2,12 +2,22 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { generateOAuthURL } from '@/components/shared';
 import './login-page.scss';
 
-export default function LoginPage() {
+interface LoginPageProps {
+    onLoginSuccess?: () => void;
+}
+
+export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     const [loading, setLoading] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        // If already logged in, skip login page
+        if (localStorage.getItem('active_loginid')) {
+            onLoginSuccess?.();
+            return;
+        }
+
         const handleMouseMove = (e: MouseEvent) => {
             if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
