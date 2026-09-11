@@ -6,7 +6,6 @@ import ChunkLoader from '@/components/loader/chunk-loader';
 import LocalStorageSyncWrapper from '@/components/localStorage-sync-wrapper';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import SplashScreen from '@/components/splash-screen/splash-screen';
-import LoginPage from '@/components/login-page/login-page';
 import { useAccountSwitching } from '@/hooks/useAccountSwitching';
 import { useLanguageFromURL } from '@/hooks/useLanguageFromURL';
 import { StoreProvider } from '@/hooks/useStore';
@@ -18,6 +17,7 @@ import './app-root.scss';
 
 const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
+const LoginPage = lazy(() => import('../components/login-page/login-page'));
 
 const LanguageHandler = ({ children }: { children: React.ReactNode }) => {
     useLanguageFromURL();
@@ -150,17 +150,18 @@ function App() {
         handleCallback();
     }, []);
 
-    // Phase 1: Splash screen
     if (phase === 'splash') {
         return <SplashScreen onComplete={handleSplashComplete} />;
     }
 
-    // Phase 2: Login page
     if (phase === 'login') {
-        return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+        return (
+            <Suspense fallback={<ChunkLoader message="Loading login..." />}>
+                <LoginPage onLoginSuccess={handleLoginSuccess} />
+            </Suspense>
+        );
     }
 
-    // Phase 3: Main app
     return <RouterProvider router={router} />;
 }
 
