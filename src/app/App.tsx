@@ -89,19 +89,6 @@ const router = createBrowserRouter(
     { basename: routerBasename }
 );
 
-// Standalone login route (outside the main layout)
-const loginRouter = createBrowserRouter(
-    createRoutesFromElements(
-        <Route path='/' element={
-            <Suspense fallback={<ChunkLoader message="Loading..." />}>
-                <LoginPage />
-            </Suspense>
-        }>
-            <Route path='login' element={<LoginPage />} />
-        </Route>
-    )
-);
-
 function App() {
     useAccountSwitching();
     const [splashDone, setSplashDone] = useState(() => {
@@ -151,15 +138,8 @@ function App() {
         handleCallback();
     }, []);
 
-    // Check if we're on the login route
-    const isLoginPage = window.location.pathname === '/login';
-
-    if (!splashDone && !isLoginPage) {
+    if (!splashDone) {
         return <SplashScreen onComplete={handleSplashComplete} />;
-    }
-
-    if (isLoginPage) {
-        return <RouterProvider router={loginRouter} />;
     }
 
     return <RouterProvider router={router} />;
