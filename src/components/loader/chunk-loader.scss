@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+$primary: #00d4ff;
+$secondary: #7b2ff7;
+$bg: #0a0a1a;
+
+.chunk-loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $bg;
+    z-index: 9999;
+}
+
+.chunk-loader-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.chunk-loader-grid {
+    position: absolute;
+    inset: -50%;
+    background-image:
+        linear-gradient(rgba($primary, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba($primary, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: perspective(500px) rotateX(60deg);
+    animation: chunkGrid 20s linear infinite;
+}
+
+@keyframes chunkGrid {
+    from { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    to { transform: perspective(500px) rotateX(60deg) translateY(60px); }
+}
+
+.chunk-loader-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.chunk-loader-logo {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chunk-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid transparent;
+
+    &-1 {
+        width: 100px;
+        height: 100px;
+        border-color: rgba($primary, 0.3);
+        animation: chunkSpin 6s linear infinite;
+        border-top-color: $primary;
+        border-right-color: $primary;
+    }
+
+    &-2 {
+        width: 70px;
+        height: 70px;
+        border-color: rgba($secondary, 0.3);
+        animation: chunkSpin 4s linear infinite reverse;
+        border-bottom-color: $secondary;
+    }
+}
+
+@keyframes chunkSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.chunk-core {
+    position: absolute;
+    animation: chunkPulse 2s ease-in-out infinite;
+}
+
+.chunk-icon {
+    width: 30px;
+    height: 30px;
+    color: $primary;
+    filter: drop-shadow(0 0 10px $primary);
+}
+
+@keyframes chunkPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.chunk-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin: 0;
+    background: linear-gradient(135deg, $primary, #fff, $secondary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.chunk-bar {
+    width: 180px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.chunk-bar-fill {
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, $primary, $secondary);
+    border-radius: 2px;
+    animation: chunkLoad 1.5s ease-in-out infinite;
+    box-shadow: 0 0 10px $primary;
+}
+
+@keyframes chunkLoad {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
+.chunk-message {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.15em;
+    margin: 0;
+}

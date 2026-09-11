@@ -1,21 +1,21 @@
 {
-    "brand_name": "YourBrand",
-    "brand_domain": "yourbrand.com",
+    "brand_name": "Donne Hunter",
+    "brand_domain": "donnehunter.com",
     "brand_hostname": {
-        "staging": "staging.yourbrand.com/dashboard",
-        "production": "yourbrand.com/dashboard"
+        "staging": "staging.donnehunter.com/dashboard",
+        "production": "donnehunter.com/dashboard"
     },
-    "domain_name": "YourBrand.com",
+    "domain_name": "DonneHunter.com",
     "colors": {
-        "primary": "#3B82F6",
-        "secondary": "#64748b",
-        "tertiary": "#8b5cf6",
-        "success": "#10b981",
-        "danger": "#ef4444",
-        "warning": "#f59e0b",
-        "info": "#0ea5e9",
+        "primary": "#00d4ff",
+        "secondary": "#7b2ff7",
+        "tertiary": "#ff0080",
+        "success": "#00ff88",
+        "danger": "#ff4444",
+        "warning": "#ffaa00",
+        "info": "#00d4ff",
         "neutral": "#6b7280",
-        "black": "#0f172a",
+        "black": "#0a0a1a",
         "white": "#ffffff",
         "grey": {
             "50": "#f8fafc",
@@ -32,8 +32,8 @@
     },
     "typography": {
         "font_family": {
-            "primary": "Inter",
-            "secondary": "Georgia, 'Times New Roman', Times, serif",
+            "primary": "Orbitron, Inter, sans-serif",
+            "secondary": "Rajdhani, Inter, sans-serif",
             "monospace": "'Courier New', Courier, monospace"
         },
         "font_sizes": {
@@ -48,30 +48,9 @@
         }
     },
     "color_variants": {
-        "light_variants": [
-            100,
-            200,
-            300,
-            400,
-            500
-        ],
-        "dark_variants": [
-            600,
-            700,
-            800,
-            900
-        ],
-        "opacity_variants": [
-            10,
-            20,
-            30,
-            40,
-            50,
-            60,
-            70,
-            80,
-            90
-        ]
+        "light_variants": [100, 200, 300, 400, 500],
+        "dark_variants": [600, 700, 800, 900],
+        "opacity_variants": [10, 20, 30, 40, 50, 60, 70, 80, 90]
     },
     "theme_config": {
         "enable_dynamic_themes": true,
@@ -79,17 +58,17 @@
         "css_variable_prefix": "--brand"
     },
     "platform": {
-        "name": "Donne Hunter",
+        "name": "DONNEHUNTER TRADING HUB",
         "footer": {
             "enable_language_settings": false,
             "enable_theme_toggle": true
         },
         "hostname": {
             "production": {
-                "com": "bot.yourbrand.com"
+                "com": "bot.donnehunter.com"
             },
             "staging": {
-                "com": "staging-bot.yourbrand.com"
+                "com": "staging-bot.donnehunter.com"
             }
         },
         "auth2_url": {

@@ -5,8 +5,12 @@
     align-items: center;
     justify-content: center;
     font-size: 1.6rem;
+    background: #0a0a1a;
 
     .load-message {
         margin-top: 6rem;
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.15em;
     }
 }

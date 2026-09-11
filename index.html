@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" dir="auto" class="light">
+<html lang="en" dir="auto" class="dark">
     <head>
         <!-- Google Tag Manager -->
         <script>
@@ -19,25 +19,30 @@
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="<%= assetPrefix %>/deriv-logo.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-        <meta name="title" content="Automate Your Trades | Deriv Bot" />
-        <meta
-            name="description"
-            content="Import your current bot or learn how to create a trading bot from scratch with our detailed guides, FAQs, and tutorials. Start with a quick strategy!"
-        />
-        <meta property="og:title" content="Deriv Bot" />
-        <meta
-            property="og:description"
-            content="Import your current bot or learn how to create a trading bot from scratch with our detailed guides, FAQs, and tutorials. Start with a quick strategy!"
-        />
-        <title>Automate Your Trades | Deriv Bot</title>
+        <meta name="theme-color" content="#0a0a1a" />
+        <meta name="title" content="DONNEHUNTER TRADING HUB" />
+        <meta name="description" content="Automated Trading Bot - DONNEHUNTER TRADING HUB" />
+        <meta property="og:title" content="DONNEHUNTER TRADING HUB" />
+        <meta property="og:description" content="Automated Trading Bot - DONNEHUNTER TRADING HUB" />
+
+        <!-- Preconnect to Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <!-- Preload Orbitron and Rajdhani -->
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+        <title>DONNEHUNTER TRADING HUB</title>
         <style>
             :root {
                 font-size: 62.5%;
             }
+            /* Prevent FOUC */
+            html { background: #0a0a1a; }
+            body { background: #0a0a1a; }
         </style>
     </head>
 
-    <body class="body theme theme--light">
+    <body class="body theme theme--dark">
         <!-- Google Tag Manager (noscript) -->
         <noscript
             ><iframe
@@ -75,7 +80,7 @@
                         i(['off', c.call(arguments)]);
                     },
                     get: function () {
-                        if (!e._h) throw new Error('[LiveChatWidget] You can’t use getters before load.');
+                        if (!e._h) throw new Error('[LiveChatWidget] You can\u2019t use getters before load.');
                         return i(['get', c.call(arguments)]);
                     },
                     call: function () {
