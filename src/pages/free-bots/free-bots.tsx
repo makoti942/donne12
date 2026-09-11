@@ -73,12 +73,34 @@ const FreeBots = observer(() => {
 
     const loadBotIntoBuilder = async (bot: BotData) => {
         if (bot.xml) {
-            const tempId = `freebot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await load_modal.loadStrategyToBuilder(
-                { id: tempId, xml: bot.xml, name: bot.name, save_type: 'pending' },
-                true
-            );
-            setActiveTab(DBOT_TABS.BOT_BUILDER);
+            try {
+                // Wait for Blockly workspace to be available
+                let workspace = window.Blockly?.derivWorkspace;
+                if (!workspace) {
+                    for (let i = 0; i < 10; i++) {
+                        await new Promise(r => setTimeout(r, 200));
+                        workspace = window.Blockly?.derivWorkspace;
+                        if (workspace) break;
+                    }
+                }
+
+                if (!workspace) {
+                    console.warn('Blockly workspace not available, switching to bot builder first');
+                    setActiveTab(DBOT_TABS.BOT_BUILDER);
+                    return;
+                }
+
+                const tempId = `freebot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                await load_modal.loadStrategyToBuilder(
+                    { id: tempId, xml: bot.xml, name: bot.name, save_type: 'pending' },
+                    false
+                );
+                setActiveTab(DBOT_TABS.BOT_BUILDER);
+            } catch (err) {
+                console.error('Failed to load bot:', err);
+                // Still switch to bot builder even if load failed
+                setActiveTab(DBOT_TABS.BOT_BUILDER);
+            }
         }
     };
 
