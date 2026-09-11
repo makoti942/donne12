@@ -32,8 +32,8 @@
     },
     "typography": {
         "font_family": {
-            "primary": "Orbitron, Inter, sans-serif",
-            "secondary": "Rajdhani, Inter, sans-serif",
+            "primary": "Space Grotesk, Inter, sans-serif",
+            "secondary": "Inter, sans-serif",
             "monospace": "'Courier New', Courier, monospace"
         },
         "font_sizes": {

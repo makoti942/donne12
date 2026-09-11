@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 $primary: #00d4ff;
 $secondary: #7b2ff7;
@@ -100,7 +100,7 @@ $bg: #0a0a1a;
 }
 
 .chunk-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.2em;
@@ -134,7 +134,7 @@ $bg: #0a0a1a;
 }
 
 .chunk-message {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.5);
     letter-spacing: 0.15em;

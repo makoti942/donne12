@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 $splash-primary: #00d4ff;
 $splash-secondary: #7b2ff7;
@@ -151,7 +151,7 @@ $splash-bg: #0a0a1a;
 .splash-title {
     display: flex;
     gap: 0.1em;
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(2rem, 6vw, 4rem);
     font-weight: 900;
     letter-spacing: 0.15em;
@@ -207,7 +207,7 @@ $splash-bg: #0a0a1a;
 }
 
 .splash-sub-text {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: clamp(1rem, 3vw, 1.5rem);
     font-weight: 600;
     letter-spacing: 0.5em;

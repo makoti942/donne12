@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 $primary: #00d4ff;
 $secondary: #7b2ff7;
@@ -205,7 +205,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
 
 .title-char {
     display: inline-block;
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(2.5rem, 7vw, 4.5rem);
     font-weight: 900;
     letter-spacing: 0.12em;
@@ -221,7 +221,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
     transform-origin: bottom center;
 
     &-sub {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: 'Inter', sans-serif;
         font-size: clamp(1rem, 3vw, 1.8rem);
         font-weight: 600;
         letter-spacing: 0.6em;
@@ -251,7 +251,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
     display: flex;
     align-items: center;
     gap: 1rem;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: 500;
     letter-spacing: 0.3em;
@@ -319,7 +319,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
 }
 
 .login-card-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
     color: #fff;
@@ -405,7 +405,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -475,7 +475,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
 }
 
 .stat-value {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.2rem;
     font-weight: 700;
     color: $primary;
@@ -483,7 +483,7 @@ $card-bg: rgba(15, 15, 35, 0.8);
 }
 
 .stat-label {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.2em;

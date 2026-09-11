@@ -35,11 +35,11 @@ const FourOhFour = () => (
         justifyContent: 'center',
         background: '#0a0a1a',
         color: '#fff',
-        fontFamily: "'Orbitron', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         gap: '1rem',
     }}>
         <h1 style={{ fontSize: '6rem', margin: 0, color: '#00d4ff', textShadow: '0 0 20px #00d4ff' }}>404</h1>
-        <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.2em' }}>
+        <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.2em' }}>
             PAGE NOT FOUND
         </p>
         <a href="/" style={{
@@ -49,7 +49,7 @@ const FourOhFour = () => (
             color: '#fff',
             textDecoration: 'none',
             borderRadius: '8px',
-            fontFamily: "'Rajdhani', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 600,
             letterSpacing: '0.1em',
         }}>
