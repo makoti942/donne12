@@ -1,0 +1,167 @@
+<xml xmlns="https://developers.google.com/blockly/xml" is_dbot="true" collection="false">
+  <variables>
+    <variable id="initStakeVar">Initial Stake</variable>
+    <variable id="stakeVar">Current Stake</variable>
+    <variable id="martFactorVar">Martingale Factor</variable>
+    <variable id="initializedVar">Martingale Initialized</variable>
+  </variables>
+  <block type="trade_definition" id="}F,4#Sa]HciWV~Jye~gS" deletable="false" x="0" y="60">
+    <statement name="TRADE_OPTIONS">
+      <block type="trade_definition_market" id="O=Zr3]zqZ|*|,(##^,4c" deletable="false" movable="false">
+        <field name="MARKET_LIST">synthetic_index</field>
+        <field name="SUBMARKET_LIST">random_index</field>
+        <field name="SYMBOL_LIST">1HZ100V</field>
+        <next>
+          <block type="trade_definition_tradetype" id="i40q+Oi2S.]BY-XJFe9^" deletable="false" movable="false">
+            <field name="TRADETYPECAT_LIST">callput</field>
+            <field name="TRADETYPE_LIST">callput</field>
+            <next>
+              <block type="trade_definition_contracttype" id="LK05VSNer$#lcXas8F@e" deletable="false" movable="false">
+                <field name="TYPE_LIST">both</field>
+                <next>
+                  <block type="trade_definition_candleinterval" id="`nkOFF!xRr2R8Ezn7K9n" deletable="false" movable="false">
+                    <field name="CANDLEINTERVAL_LIST">60</field>
+                    <next>
+                      <block type="trade_definition_restartbuysell" id="T-9x~q$,1Ey3?SzFdNq#" deletable="false" movable="false">
+                        <field name="TIME_MACHINE_ENABLED">FALSE</field>
+                        <next>
+                          <block type="trade_definition_restartonerror" id="UaD8ITktDA15Ca1).)ah" deletable="false" movable="false">
+                            <field name="RESTARTONERROR">TRUE</field>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="INITIALIZATION">
+      <block type="variables_set" id="setInitialStakeValue">
+        <field name="VAR" id="initStakeVar">Initial Stake</field>
+        <value name="VALUE">
+          <block type="math_number" id="initialStakeValue">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="setCurrentStakeInitial">
+            <field name="VAR" id="stakeVar">Current Stake</field>
+            <value name="VALUE">
+              <block type="variables_get" id="getInitialStake">
+                <field name="VAR" id="initStakeVar">Initial Stake</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="setMartingaleFactor">
+                <field name="VAR" id="martFactorVar">Martingale Factor</field>
+                <value name="VALUE">
+                  <block type="math_number" id="martFactorValue">
+                    <field name="NUM">2</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="markInitialized">
+                    <field name="VAR" id="initializedVar">Martingale Initialized</field>
+                    <value name="VALUE">
+                      <block type="logic_boolean" id="initializedTrue">
+                        <field name="BOOL">TRUE</field>
+                      </block>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <statement name="SUBMARKET">
+      <block type="trade_definition_tradeoptions" id="/6=T~KI`X+mn5$|K,]tI">
+        <mutation xmlns="http://www.w3.org/1999/xhtml" has_first_barrier="false" has_second_barrier="false" has_prediction="false" vh_enabled="false"></mutation>
+        <field name="DURATIONTYPE_LIST">t</field>
+        <field name="VIRTUAL_HOOK_ENABLED">FALSE</field>
+        <value name="DURATION">
+          <shadow type="math_number_positive" id="T8`V0lfU%!:y1+zCGft1">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+        <value name="AMOUNT">
+          <block type="variables_get" id="getStakeAmount">
+            <field name="VAR" id="stakeVar">Current Stake</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="during_purchase" id="+w,G6!xJ[/-nmPnseM#W" x="714" y="60">
+    <statement name="DURING_PURCHASE_STACK">
+      <block type="controls_if" id="#V}P95eI72f!K:%T2~l_">
+        <value name="IF0">
+          <block type="check_sell" id="}59N!Q/`.q~;0abDkIs#"></block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="after_purchase" id="c;hEA7}nM@_,g?5*L(=e" x="714" y="292">
+    <statement name="AFTERPURCHASE_STACK">
+      <block type="controls_if" id="martingaleResultCheck">
+        <mutation xmlns="http://www.w3.org/1999/xhtml" else="1"></mutation>
+        <value name="IF0">
+          <block type="contract_check_result" id="checkWinResult">
+            <field name="CHECK_RESULT">win</field>
+          </block>
+        </value>
+        <statement name="DO0">
+          <block type="variables_set" id="resetStakeAfterWin">
+            <field name="VAR" id="stakeVar">Current Stake</field>
+            <value name="VALUE">
+              <block type="variables_get" id="getInitialStakeOnWin">
+                <field name="VAR" id="initStakeVar">Initial Stake</field>
+              </block>
+            </value>
+          </block>
+        </statement>
+        <statement name="ELSE">
+          <block type="variables_set" id="increaseStakeAfterLoss">
+            <field name="VAR" id="stakeVar">Current Stake</field>
+            <value name="VALUE">
+              <block type="math_arithmetic" id="multiplyStakeByFactor">
+                <field name="OP">MULTIPLY</field>
+                <value name="A">
+                  <shadow type="math_number" id="stakeShadow">
+                    <field name="NUM">1</field>
+                  </shadow>
+                  <block type="variables_get" id="getCurrentStakeForMultiply">
+                    <field name="VAR" id="stakeVar">Current Stake</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <shadow type="math_number" id="factorShadow">
+                    <field name="NUM">2</field>
+                  </shadow>
+                  <block type="variables_get" id="getMartingaleFactor">
+                    <field name="VAR" id="martFactorVar">Martingale Factor</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+          </block>
+        </statement>
+        <next>
+          <block type="trade_again" id="G=znPPs6=xtZA|o(KBQX"></block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="before_purchase" id="D_FIc+E9*cr|grV8}?n?" deletable="false" x="0" y="834">
+    <statement name="BEFOREPURCHASE_STACK">
+      <block type="purchase" id="og/YYS3nvV1*r61Co/hE">
+        <field name="PURCHASE_LIST">CALL</field>
+      </block>
+    </statement>
+  </block>
+</xml>
