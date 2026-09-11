@@ -232,14 +232,12 @@ export default class RunPanelStore {
         this.is_contract_buying_in_progress = false;
 
         const { is_multiplier } = this.root_store.summary_card;
-        const { summary_card } = this.root_store;
 
         if (is_multiplier) {
             this.showStopMultiplierContractDialog();
         } else {
             this.stopBot();
-            summary_card.clear();
-            this.setShowBotStopMessage(true);
+            this.root_store.summary_card.clear();
         }
     };
 

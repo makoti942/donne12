@@ -173,7 +173,8 @@ const AppContent = observer(() => {
     }, [is_api_initialized]);
 
     React.useEffect(() => {
-        if (client.is_logged_in && is_api_initialized) {
+        // Only re-init when loginid changes AND the app hasn't loaded yet (first time)
+        if (client.is_logged_in && is_api_initialized && is_loading) {
             changeActiveSymbolLoadingState();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

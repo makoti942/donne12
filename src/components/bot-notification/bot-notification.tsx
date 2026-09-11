@@ -32,20 +32,24 @@ export const botNotification = (
     primary_action?: TAction,
     custom_style?: Partial<TNotificationStyle>
 ) => {
-    return toast(
-        ({ closeToast }) => (
-            <NotificationContent message={message} primary_action={primary_action} closeToast={closeToast} />
-        ),
-        {
-            type: custom_style?.type ?? notification_style.type,
-            position: custom_style?.position ?? notification_style.position,
-            autoClose: custom_style?.autoClose ?? notification_style.autoClose,
-            hideProgressBar: custom_style?.hideProgressBar ?? notification_style.hideProgressBar,
-            closeOnClick: custom_style?.closeOnClick ?? notification_style.closeOnClick,
-            pauseOnHover: custom_style?.pauseOnHover ?? notification_style.pauseOnHover,
-            pauseOnFocusLoss: custom_style?.pauseOnFocusLoss ?? notification_style.pauseOnFocusLoss,
-            closeButton: custom_style?.closeButton ?? true,
-            className: custom_style?.className ?? '',
-        }
-    );
+    try {
+        return toast(
+            ({ closeToast }) => (
+                <NotificationContent message={message} primary_action={primary_action} closeToast={closeToast} />
+            ),
+            {
+                type: custom_style?.type ?? notification_style.type,
+                position: custom_style?.position ?? notification_style.position,
+                autoClose: custom_style?.autoClose ?? notification_style.autoClose,
+                hideProgressBar: custom_style?.hideProgressBar ?? notification_style.hideProgressBar,
+                closeOnClick: custom_style?.closeOnClick ?? notification_style.closeOnClick,
+                pauseOnHover: custom_style?.pauseOnHover ?? notification_style.pauseOnHover,
+                pauseOnFocusLoss: custom_style?.pauseOnFocusLoss ?? notification_style.pauseOnFocusLoss,
+                closeButton: custom_style?.closeButton ?? true,
+                className: custom_style?.className ?? '',
+            }
+        );
+    } catch (e) {
+        console.warn('botNotification failed:', e);
+    }
 };
