@@ -84,21 +84,22 @@ const FreeBots = observer(() => {
                     }
                 }
 
-                if (!workspace) {
-                    console.warn('Blockly workspace not available, switching to bot builder first');
+                if (!workspace || !window.Blockly) {
+                    console.warn('Blockly workspace not available');
                     setActiveTab(DBOT_TABS.BOT_BUILDER);
                     return;
                 }
 
-                const tempId = `freebot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                await load_modal.loadStrategyToBuilder(
-                    { id: tempId, xml: bot.xml, name: bot.name, save_type: 'pending' },
-                    false
-                );
+                // Parse and load XML directly into workspace
+                const xmlDom = window.Blockly.utils.xml.textToDom(bot.xml);
+                workspace.clear();
+                window.Blockly.Xml.domToWorkspace(xmlDom, workspace);
+                workspace.strategy_to_load = bot.xml;
+                workspace.current_strategy_id = `freebot_${Date.now()}`;
+
                 setActiveTab(DBOT_TABS.BOT_BUILDER);
             } catch (err) {
                 console.error('Failed to load bot:', err);
-                // Still switch to bot builder even if load failed
                 setActiveTab(DBOT_TABS.BOT_BUILDER);
             }
         }
