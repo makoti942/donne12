@@ -26,6 +26,24 @@ const LanguageHandler = ({ children }: { children: React.ReactNode }) => {
 
 const routerBasename = isPreviewMode() ? PREVIEW_BASE_PATH : undefined;
 
+class GlobalErrorBoundary extends React.Component<
+    { children: React.ReactNode },
+    { hasError: boolean }
+> {
+    state = { hasError: false };
+    static getDerivedStateFromError() { return { hasError: true }; }
+    componentDidCatch(error: Error) {
+        console.warn('[GlobalErrorBoundary] caught:', error.message);
+        setTimeout(() => this.setState({ hasError: false }), 500);
+    }
+    render() {
+        if (this.state.hasError) {
+            return <ChunkLoader message={localize('Recovering...')} />;
+        }
+        return this.props.children;
+    }
+}
+
 const FourOhFour = () => (
     <div style={{
         minHeight: '100vh',
@@ -72,7 +90,9 @@ const router = createBrowserRouter(
                                 <LocalStorageSyncWrapper>
                                     <RoutePromptDialog />
                                     <CoreStoreProvider>
-                                        <Layout />
+                                        <GlobalErrorBoundary>
+                                            <Layout />
+                                        </GlobalErrorBoundary>
                                     </CoreStoreProvider>
                                 </LocalStorageSyncWrapper>
                             </StoreProvider>
@@ -162,7 +182,11 @@ function App() {
         );
     }
 
-    return <RouterProvider router={router} />;
+    return (
+        <GlobalErrorBoundary>
+            <RouterProvider router={router} />
+        </GlobalErrorBoundary>
+    );
 }
 
 export default App;
