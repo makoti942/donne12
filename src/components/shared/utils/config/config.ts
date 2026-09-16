@@ -160,3 +160,7 @@ export const generateOAuthURL = async (prompt?: string): Promise<string> => {
         return '';
     }
 };
+
+export const getAppId = () => {
+    return process.env.NEXT_PUBLIC_DERIV_APP_ID || '34lrNqhMmmQ5Hww4aCZFV';
+};

@@ -22,6 +22,7 @@ import BlocklyLoading from '../components/blockly-loading';
 import BotStopped from '../components/bot-stopped';
 import BotBuilder from '../pages/bot-builder';
 import Main from '../pages/main';
+import { MakotiWidget } from '../components/makoti-widget/makoti-widget';
 import './app.scss';
 import 'react-toastify/dist/ReactToastify.css';
 import '../components/bot-notification/bot-notification.scss';
@@ -200,6 +201,7 @@ const AppContent = observer(() => {
                             <Main />
                             <BotBuilder />
                             <BotStopped />
+                            <MakotiWidget />
                             <TransactionDetailsModal />
                             <ToastContainer limit={3} draggable={false} />
                         </div>
