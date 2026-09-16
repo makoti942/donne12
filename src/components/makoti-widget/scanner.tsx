@@ -471,7 +471,7 @@ const ENTRY_BOT_TEMPLATE = `<xml xmlns="https://developers.google.com/blockly/xm
   </block>
 </xml>`;
 
-type BotId = 'pvty_kill' | 'rf_v4' | 'entry_digit';
+type BotId = 'pvty_kill' | 'rf_v4';
 
 interface SymbolDigitResult {
     symbol: string;
@@ -538,14 +538,10 @@ interface TriggerInfo {
     triggerPower: number;   // how strong the trigger digit is in current market
 }
 
-type ScanResult = SymbolDigitResult | SymbolDirectionResult | TriggerDigitResult;
+type ScanResult = SymbolDigitResult | SymbolDirectionResult;
 
 function isDigitResult(r: ScanResult): r is SymbolDigitResult {
     return (r as SymbolDigitResult).pcts !== undefined && 'totalTicks' in r && !('triggers' in r);
-}
-
-function isTriggerResult(r: ScanResult): r is TriggerDigitResult {
-    return 'triggers' in r;
 }
 
 function calcDigitPcts(digits: number[]): number[] {
@@ -946,11 +942,6 @@ export const Scanner: React.FC = () => {
     const [pendingSymbol, setPendingSymbol] = useState('');
     const [notification, setNotification] = useState<{ msg: string; type: 'info' | 'success' | 'warn' } | null>(null);
 
-    // Entry Digit config
-    const [entryContractType, setEntryContractType] = useState<'DIGITOVER' | 'DIGITUNDER'>('DIGITUNDER');
-    const [entryBarrier, setEntryBarrier] = useState(7);
-    const [entryStake, setEntryStake] = useState('1');
-
     // Single vs all volatilities
     const [singleVol, setSingleVol] = useState(false);
     const [singleVolSymbol, setSingleVolSymbol] = useState(ALL_SYMBOLS[0]);
@@ -961,12 +952,6 @@ export const Scanner: React.FC = () => {
     // Sync refs
     useEffect(() => { singleVolRef.current = singleVol; }, [singleVol]);
     useEffect(() => { singleVolSymbolRef.current = singleVolSymbol; }, [singleVolSymbol]);
-
-    // Top prediction for Load Bot feature
-    const [topPrediction, setTopPrediction] = useState<{
-        symbol: string; label: string; entryDigit: number;
-        contractType: 'DIGITOVER' | 'DIGITUNDER'; barrier: number;
-    } | null>(null);
 
     // Refs for logic (avoid stale closures)
     const wsRef = useRef<MakotiWS | null>(null);
@@ -980,12 +965,6 @@ export const Scanner: React.FC = () => {
     const pendingSymbolRef = useRef<string>('');
     const msgHandlerRef = useRef<(data: any) => void>(() => {});
     const cancelScanRef = useRef<(() => void) | null>(null);
-    const entryContractTypeRef = useRef<'DIGITOVER' | 'DIGITUNDER'>('DIGITUNDER');
-    const entryBarrierRef = useRef(7);
-
-    // Sync Entry Digit refs
-    useEffect(() => { entryContractTypeRef.current = entryContractType; }, [entryContractType]);
-    useEffect(() => { entryBarrierRef.current = entryBarrier; }, [entryBarrier]);
 
     const showNotify = useCallback((msg: string, type: 'info' | 'success' | 'warn' = 'info') => {
         setNotification({ msg, type });
@@ -1032,29 +1011,6 @@ export const Scanner: React.FC = () => {
         wsRef.current = null;
     }, []);
 
-    const loadBotToBuilder = useCallback(async () => {
-        if (!topPrediction) return;
-        const xml = ENTRY_BOT_TEMPLATE
-            .replace('__SYMBOL__', topPrediction.symbol)
-            .replace('__NORMAL_PRED__', String(topPrediction.barrier))
-            .replace('__ENTRY_DIGIT__', String(topPrediction.entryDigit))
-            .replace('__STAKE__', entryStake)
-            .replace(/__CONTRACT_TYPE__/g, topPrediction.contractType);
-        try {
-            const store = DBotStore.instance;
-            if (store?.load_modal) {
-                await store.load_modal.loadStrategyToBuilder(
-                    { id: `entry_bot_${Date.now()}`, xml, name: `${topPrediction.label} — D${topPrediction.entryDigit} ${topPrediction.contractType} ${topPrediction.barrier}`, save_type: 'pending' },
-                    true
-                );
-                showNotify('Bot loaded into workspace!', 'success');
-                (window.DBot as any)?.__minimizeWidget?.();
-            }
-        } catch (e: any) {
-            showNotify(`Failed to load bot: ${e.message}`, 'warn');
-        }
-    }, [topPrediction, entryStake, showNotify]);
-
     /* ── Create persistent WS (reused across auto-scan cycles) ──────────── */
     const ensureWs = useCallback(() => {
         if (wsRef.current && wsRef.current.isOpen()) return wsRef.current;
@@ -1062,7 +1018,7 @@ export const Scanner: React.FC = () => {
         const sendTicksRequest = () => {
             if (!window._newSystemWS || window._newSystemWS.readyState !== WebSocket.OPEN) return;
             const bot = botRef.current;
-            const count = bot === 'pvty_kill' ? 1000 : bot === 'entry_digit' ? 1500 : 60;
+            const count = bot === 'pvty_kill' ? 1000 : 60;
             const syms = symbolsToScanRef.current;
             setProgress(`Fetching ${count} ticks from ${syms.length === 1 ? SYMBOL_LABELS[syms[0]] : `${syms.length} volatilities`}…`);
             syms.forEach(sym => {
@@ -1094,7 +1050,7 @@ export const Scanner: React.FC = () => {
         const symbolsToScan = symbolsToScanRef.current;
         pendingRef.current = new Set(symbolsToScan);
         collectedRef.current = new Map();
-        const timeoutMs = currentBot === 'pvty_kill' ? 20000 : currentBot === 'entry_digit' ? 45000 : 10000;
+        const timeoutMs = currentBot === 'pvty_kill' ? 20000 : 10000;
         const scanTimeout = setTimeout(() => {
             if (!finalized) finalize();
         }, timeoutMs);
@@ -1155,83 +1111,6 @@ export const Scanner: React.FC = () => {
                 bestScore = Math.round(Math.max(scanResults[0]?.pcts[7] ?? 0, scanResults[0]?.pcts[8] ?? 0, scanResults[0]?.pcts[9] ?? 0));
                 setResults(scanResults);
                 setBestSymbols(best.slice(0, 3));
-            } else if (currentBot === 'entry_digit') {
-                // Entry Digit Trigger Analysis — progressive, one volatility at a time
-                const entryType = botRef.current === 'entry_digit' ? entryContractTypeRef.current : 'DIGITOVER';
-                const entryBar = botRef.current === 'entry_digit' ? entryBarrierRef.current : 3;
-
-                const symbols = Array.from(collectedRef.current.entries()).filter(([, p]) => p && p.length >= 30);
-                const scanResults: TriggerDigitResult[] = [];
-                let idx = 0;
-
-                const analyzeNext = () => {
-                    if (idx >= symbols.length) {
-                        // Done — sort and finalize
-                        scanResults.sort((a, b) => {
-                            if (a.qualifies && !b.qualifies) return -1;
-                            if (!a.qualifies && b.qualifies) return 1;
-                            return (b.triggers[0]?.confidence ?? 0) - (a.triggers[0]?.confidence ?? 0);
-                        });
-                        best = scanResults.map(r => r.symbol);
-                        bestScore = Math.round(scanResults[0]?.triggers[0]?.confidence ?? 0);
-                        setResults(scanResults);
-                        setBestSymbols(best.slice(0, 3));
-                        setScanning(false);
-                        scanningRef.current = false;
-
-                        // Show prediction
-                        const topResult = scanResults[0];
-                        const topTrigger = topResult?.triggers[0];
-                        if (topTrigger) {
-                            const trendLabel = topTrigger.patternTrend.trend === 'strengthening' ? 'STRENGTHENING'
-                                : topTrigger.patternTrend.trend === 'weakening' ? 'WEAKENING'
-                                : topTrigger.patternTrend.trend === 'new' ? 'NEW PATTERN'
-                                : topTrigger.patternTrend.trend === 'dying' ? 'DYING' : 'STABLE';
-                            setProgress(`PREDICTION → ${topResult.label} | Entry Digit: Digit ${topTrigger.digit} | ${trendLabel} | Score: ${topTrigger.confidence.toFixed(0)}/100 | ${topTrigger.significance === 'high' ? '★ SIGNIFICANT' : topTrigger.significance === 'medium' ? '◆ MODERATE' : topTrigger.significance === 'low' ? '○ MARGINAL' : '× NOISE'}`);
-                            setTopPrediction({
-                                symbol: topResult.symbol, label: topResult.label,
-                                entryDigit: topTrigger.digit,
-                                contractType: entryContractTypeRef.current,
-                                barrier: entryBarrierRef.current,
-                            });
-                        } else {
-                            setProgress('No strong trigger pattern found');
-                            setTopPrediction(null);
-                        }
-                        cleanup();
-                        return;
-                    }
-
-                    const [sym, prices] = symbols[idx];
-                    const pipSize = PIP_SIZES[sym] || 2;
-                    const digits = prices.map(p => Number(Number(p).toFixed(pipSize).slice(-1)));
-                    const analysis = analyzeTriggerDigits(digits, entryType, entryBar);
-
-                    const bestTrigger = analysis.triggers[0];
-                    const qualifies = bestTrigger !== undefined && bestTrigger.confidence >= 40 && bestTrigger.significance !== 'none';
-                    const detail = bestTrigger
-                        ? `Best: D${bestTrigger.digit} (${bestTrigger.occurrences}x) | ${bestTrigger.boost.toFixed(1)}% boost | ${bestTrigger.consistency.toFixed(0)}% consistent | Score: ${bestTrigger.confidence.toFixed(0)}/100`
-                        : 'No strong trigger found';
-
-                    scanResults.push({
-                        symbol: sym, label: SYMBOL_LABELS[sym],
-                        baselinePcts: analysis.baselinePcts,
-                        baselineWinPct: analysis.baselineWinPct,
-                        triggers: analysis.triggers,
-                        qualifies,
-                        detail,
-                    });
-
-                    idx++;
-                    setProgress(`Analyzing ${SYMBOL_LABELS[sym]}… (${idx}/${symbols.length})`);
-                    setResults([...scanResults]);
-
-                    setTimeout(analyzeNext, 400);
-                };
-
-                // Start progressive analysis after a small delay
-                setTimeout(analyzeNext, 100);
-                return; // Exit finalize early — analysis continues async
             } else {
                 const scanResults: SymbolDirectionResult[] = [];
                 collectedRef.current.forEach((prices: number[], sym) => {
@@ -1276,20 +1155,6 @@ export const Scanner: React.FC = () => {
                     setProgress(`Top: ${bestLabel} (${bestScore}%)`);
                     cleanup();
                 }
-            } else if (currentBot === 'entry_digit') {
-                const entryResults = results as TriggerDigitResult[];
-                const bestTrigger = entryResults[0]?.triggers[0];
-                if (bestTrigger) {
-                    const curType = entryContractTypeRef.current;
-                    const curBar = entryBarrierRef.current;
-                    const winDigits = curType === 'DIGITOVER'
-                        ? `${curBar + 1}-9`
-                        : `0-${curBar - 1}`;
-                    setProgress(`Best: ${bestLabel} | Trigger: D${bestTrigger.digit} → +${bestTrigger.boost.toFixed(1)}% boost on ${winDigits} | ${bestTrigger.consistency.toFixed(0)}% consistent`);
-                } else {
-                    setProgress('No strong trigger pattern found across volatilities');
-                }
-                cleanup();
             } else {
                 setProgress(`Top: ${bestLabel} (max 7/8/9: ${bestScore}%)`);
                 cleanup();
@@ -1302,9 +1167,6 @@ export const Scanner: React.FC = () => {
             if (currentBot === 'pvty_kill') {
                 setProgress(`Fetching 1000 ticks from ${symbolsToScan.length === 1 ? SYMBOL_LABELS[symbolsToScan[0]] : `${symbolsToScan.length} volatilities`}…`);
                 symbolsToScan.forEach(sym => mws.send({ ticks_history: sym, count: 1000, end: 'latest', style: 'ticks' }));
-            } else if (currentBot === 'entry_digit') {
-                setProgress(`Fetching 1500 ticks from ${symbolsToScan.length === 1 ? SYMBOL_LABELS[symbolsToScan[0]] : `${symbolsToScan.length} volatilities`}…`);
-                symbolsToScan.forEach(sym => mws.send({ ticks_history: sym, count: 1500, end: 'latest', style: 'ticks' }));
             } else {
                 setProgress(`Fetching 60 ticks from ${symbolsToScan.length === 1 ? SYMBOL_LABELS[symbolsToScan[0]] : `${symbolsToScan.length} volatilities`}…`);
                 symbolsToScan.forEach(sym => mws.send({ ticks_history: sym, count: 60, end: 'latest', style: 'ticks' }));
@@ -1371,48 +1233,14 @@ export const Scanner: React.FC = () => {
                     <MwSelect value={bot} options={[
                         { value: 'pvty_kill', label: 'Poverty Killer' },
                         { value: 'rf_v4', label: 'Rise/Fall V4' },
-                        { value: 'entry_digit', label: 'Entry Digit' },
                     ]}
                         onChange={v => setBot(v as BotId)} disabled={scanning} />
                 </div>
                 <div className='mw-scanner__desc'>
                     {bot === 'pvty_kill'
                         ? 'Scans 1 000 ticks per volatility. Finds markets where digits 7, 8 and 9 each stay below 10%.'
-                        : bot === 'entry_digit'
-                        ? 'Deep trigger analysis — finds which digit appearance causes winning digits to surge. Provides the perfect entry trigger digit for your contract.'
                         : 'Analyses 60 recent ticks per volatility (current candle). Finds choppy micro-markets — auto-switches every 3s.'}
                 </div>
-                {bot === 'entry_digit' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6 }}>
-                        <div className='mw-field'>
-                            <label className='mw-label'>Stake ($)</label>
-                            <input className='mw-input' type='number' min='0.35' step='0.01'
-                                value={entryStake}
-                                onChange={e => setEntryStake(e.target.value)}
-                                disabled={scanning} />
-                        </div>
-                        <div className='mw-field'>
-                            <label className='mw-label'>Contract Type</label>
-                            <MwSelect value={entryContractType} options={[
-                                { value: 'DIGITOVER', label: 'OVER' },
-                                { value: 'DIGITUNDER', label: 'UNDER' },
-                            ]}
-                                onChange={v => setEntryContractType(v as 'DIGITOVER' | 'DIGITUNDER')} disabled={scanning} />
-                        </div>
-                        <div className='mw-field'>
-                            <label className='mw-label'>Barrier Digit</label>
-                            <input className='mw-input' type='number' min={0} max={9}
-                                defaultValue={entryBarrier}
-                                key={entryBarrier}
-                                onChange={e => {
-                                    const v = parseInt(e.target.value);
-                                    if (!isNaN(v) && v >= 0 && v <= 9) setEntryBarrier(v);
-                                }}
-                                disabled={scanning}
-                                style={{ width: 60, textAlign: 'center' }} />
-                        </div>
-                    </div>
-                )}
                 {bot === 'rf_v4' && (
                     <label className='mw-switch-row'>
                         <span className='mw-switch-label'>Auto Switcher</span>
@@ -1459,20 +1287,12 @@ export const Scanner: React.FC = () => {
                         })() : progress}
                     </div>
                 )}
-                {topPrediction && !scanning && (
-                    <button className='mw-btn' onClick={loadBotToBuilder}
-                        style={{ marginTop: 6, background: '#2196f3', color: '#fff', fontWeight: 'bold', width: '100%' }}>
-                        Load Bot to Workspace
-                    </button>
-                )}
             </div>
             {results.length > 0 && (
                 <div className='mw-scanner__results'>
                     <div className='mw-scanner__results-head'>
                         {bot === 'pvty_kill'
                             ? 'Digit 7 / 8 / 9 Distribution (1 000 ticks)'
-                            : bot === 'entry_digit'
-                            ? `Entry Digit Trigger Analysis (1500 ticks) — ${entryContractType === 'DIGITOVER' ? 'OVER' : 'UNDER'} ${entryBarrier}`
                             : `Micro-Choppiness (current candle, 60 ticks) ${autoSwitcherActive ? '— Auto-switching ON' : ''}`}
                     </div>
                     {bestSymbols.length > 0 && (
@@ -1500,157 +1320,7 @@ export const Scanner: React.FC = () => {
                                         ))}
                                     </div>
                                 )}
-                                {isTriggerResult(r) && (
-                                    <div style={{ padding: '4px 0' }}>
-                                        {/* Baseline digit distribution */}
-                                        <div style={{ fontSize: 9, color: '#888', marginBottom: 4 }}>
-                                            Baseline (1500 ticks) — Win rate: <span style={{ color: '#ffd700' }}>{r.baselineWinPct.toFixed(1)}%</span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 3, marginBottom: 8, flexWrap: 'wrap' }}>
-                                            {r.baselinePcts.map((p, i) => {
-                                                const isWin = entryContractType === 'DIGITOVER' ? i > entryBarrier : i < entryBarrier;
-                                                return (
-                                                    <div key={i} style={{
-                                                        background: isWin ? '#1a3d1a' : '#2d1a1a',
-                                                        border: `1px solid ${isWin ? '#4caf50' : '#666'}`,
-                                                        borderRadius: 3, padding: '1px 4px', fontSize: 8, textAlign: 'center',
-                                                        minWidth: 32,
-                                                    }}>
-                                                        <div style={{ color: isWin ? '#4caf50' : '#f44336', fontWeight: 'bold' }}>D{i}</div>
-                                                        <div style={{ color: '#ccc' }}>{p.toFixed(1)}%</div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Top triggers with full percentage comparison */}
-                                        {r.triggers.slice(0, 3).map((t, ti) => {
-                                            const trendColor = t.patternTrend.trend === 'strengthening' ? '#4caf50'
-                                                : t.patternTrend.trend === 'weakening' ? '#f44336'
-                                                : t.patternTrend.trend === 'new' ? '#2196f3'
-                                                : t.patternTrend.trend === 'dying' ? '#ff9800' : '#888';
-                                            const trendLabel = t.patternTrend.trend === 'strengthening' ? '↑ STRENGTHENING'
-                                                : t.patternTrend.trend === 'weakening' ? '↓ WEAKENING'
-                                                : t.patternTrend.trend === 'new' ? '★ NEW'
-                                                : t.patternTrend.trend === 'dying' ? '✕ DYING' : '→ STABLE';
-                                            return (
-                                            <div key={t.digit} style={{
-                                                background: ti === 0 ? '#0f1f0f' : '#111',
-                                                border: `2px solid ${ti === 0 ? '#4caf50' : '#333'}`,
-                                                borderRadius: 6, padding: 10, marginBottom: 8,
-                                            }}>
-                                                {/* Big trigger digit + boost */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                                                    <div style={{
-                                                        width: 52, height: 52, borderRadius: 8,
-                                                        background: '#ffd700', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        flexDirection: 'column', flexShrink: 0,
-                                                    }}>
-                                                        <div style={{ fontSize: 8, color: '#000', fontWeight: 'bold' }}>TRIGGER</div>
-                                                        <div style={{ fontSize: 22, color: '#000', fontWeight: 'bold', lineHeight: 1 }}>D{t.digit}</div>
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                                                            <span style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>
-                                                                {r.baselineWinPct.toFixed(0)}% → {t.avgWinPctAfter.toFixed(0)}% win rate
-                                                            </span>
-                                                            <span style={{ color: t.boost > 10 ? '#4caf50' : '#ff9800', fontSize: 14, fontWeight: 'bold' }}>
-                                                                +{t.boost.toFixed(1)}%
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', gap: 12, fontSize: 9, color: '#888' }}>
-                                                            <span>{t.occurrences}x appeared</span>
-                                                            <span>{t.consistency.toFixed(0)}% consistent</span>
-                                                            <span style={{ color: trendColor, fontWeight: 'bold' }}>{trendLabel}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Digit shift bars - visual comparison */}
-                                                <div style={{ fontSize: 9, color: '#aaa', marginBottom: 6 }}>
-                                                    After D{t.digit}, digit distribution shifts:
-                                                </div>
-                                                <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                                                    {t.digitShifts.filter(s => Math.abs(s.shift) > 1).sort((a, b) => Math.abs(b.shift) - Math.abs(a.shift)).map(s => {
-                                                        const isWin = entryContractType === 'DIGITOVER' ? s.digit > entryBarrier : s.digit < entryBarrier;
-                                                        const isPositive = isWin ? s.shift > 0 : s.shift < 0;
-                                                        return (
-                                                            <div key={s.digit} style={{
-                                                                background: '#0d0d1a', border: '1px solid #333',
-                                                                borderRadius: 4, padding: '4px 8px', textAlign: 'center', minWidth: 55,
-                                                            }}>
-                                                                <div style={{ fontSize: 10, fontWeight: 'bold', color: isWin ? '#4caf50' : '#f44336' }}>D{s.digit}</div>
-                                                                <div style={{ fontSize: 8, color: '#666' }}>{s.before.toFixed(0)}% → {s.after.toFixed(0)}%</div>
-                                                                <div style={{ fontSize: 11, fontWeight: 'bold', color: isPositive ? '#4caf50' : '#f44336' }}>
-                                                                    {s.shift > 0 ? '+' : ''}{s.shift.toFixed(1)}%
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {/* Confidence + Momentum + Decay peak + Significance */}
-                                                <div style={{ marginTop: 6, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                                    <div style={{
-                                                        background: t.confidence >= 60 ? '#1a3d1a' : t.confidence >= 40 ? '#3d3a1a' : '#3d1a1a',
-                                                        border: `1px solid ${t.confidence >= 60 ? '#4caf50' : t.confidence >= 40 ? '#ffc107' : '#f44336'}`,
-                                                        borderRadius: 4, padding: '3px 8px', fontSize: 10, fontWeight: 'bold',
-                                                        color: t.confidence >= 60 ? '#4caf50' : t.confidence >= 40 ? '#ffc107' : '#f44336',
-                                                    }}>
-                                                        Score: {t.confidence.toFixed(0)}/100
-                                                    </div>
-                                                    <div style={{
-                                                        background: t.significance === 'high' ? '#1a3d1a' : t.significance === 'medium' ? '#3d3a1a' : t.significance === 'low' ? '#3d2a1a' : '#3d1a1a',
-                                                        border: `1px solid ${t.significance === 'high' ? '#4caf50' : t.significance === 'medium' ? '#ffc107' : t.significance === 'low' ? '#ff9800' : '#f44336'}`,
-                                                        borderRadius: 4, padding: '3px 8px', fontSize: 10, fontWeight: 'bold',
-                                                        color: t.significance === 'high' ? '#4caf50' : t.significance === 'medium' ? '#ffc107' : t.significance === 'low' ? '#ff9800' : '#f44336',
-                                                    }}>
-                                                        {t.significance === 'high' ? '★ SIGNIFICANT' : t.significance === 'medium' ? '◆ MODERATE' : t.significance === 'low' ? '○ MARGINAL' : '× NOISE'}
-                                                        {t.pValue < 1 && <span style={{ opacity: 0.7 }}> (p={t.pValue.toFixed(3)})</span>}
-                                                    </div>
-                                                    <div style={{
-                                                        background: t.momentum.overallMomentum > 0 ? '#1a3d1a' : '#3d1a1a',
-                                                        border: `1px solid ${t.momentum.overallMomentum > 0 ? '#4caf50' : '#f44336'}`,
-                                                        borderRadius: 4, padding: '3px 8px', fontSize: 10,
-                                                        color: t.momentum.overallMomentum > 0 ? '#4caf50' : '#f44336',
-                                                    }}>
-                                                        Momentum: {t.momentum.overallMomentum > 0 ? '+' : ''}{t.momentum.overallMomentum.toFixed(1)}%
-                                                    </div>
-                                                    <div style={{
-                                                        background: '#1a1a3d', border: '1px solid #666',
-                                                        borderRadius: 4, padding: '3px 8px', fontSize: 10, color: '#aaa',
-                                                    }}>
-                                                        Peak: tick {t.bestEntryWindow.start}-{t.bestEntryWindow.end} @ {t.bestEntryWindow.peakWinPct.toFixed(0)}%
-                                                    </div>
-                                                </div>
-
-                                                {/* Digit surge info: which specific digits are boosted */}
-                                                {t.digitSurges.length > 0 && (
-                                                    <div style={{ marginTop: 6, fontSize: 9, color: '#888' }}>
-                                                        Digits that surge after D{t.digit}:{' '}
-                                                        {t.digitSurges.slice(0, 5).map((s, si) => (
-                                                            <span key={s.digit} style={{
-                                                                color: (entryContractType === 'DIGITOVER' ? s.digit > entryBarrier : s.digit < entryBarrier) ? '#4caf50' : '#888',
-                                                                fontWeight: si === 0 ? 'bold' : 'normal',
-                                                            }}>
-                                                                D{s.digit}+{s.surgePct.toFixed(1)}%{si < Math.min(t.digitSurges.length, 5) - 1 ? ', ' : ''}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Trend detail */}
-                                                <div style={{ marginTop: 4, fontSize: 8, color: '#555' }}>
-                                                    First 50 ticks: {t.patternTrend.olderBoost > 0 ? '+' : ''}{t.patternTrend.olderBoost.toFixed(1)}% boost ({t.patternTrend.olderOccurrences}x)
-                                                    {' | '}
-                                                    Last 50 ticks: {t.patternTrend.recentBoost > 0 ? '+' : ''}{t.patternTrend.recentBoost.toFixed(1)}% boost ({t.patternTrend.recentOccurrences}x)
-                                                </div>
-                                            </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                {!isDigitResult(r) && !isTriggerResult(r) && (() => {
+                                {!isDigitResult(r) && (() => {
                                     const dr = r as SymbolDirectionResult;
                                     return (
                                         <div className='mw-scanner__dir-bar'>
