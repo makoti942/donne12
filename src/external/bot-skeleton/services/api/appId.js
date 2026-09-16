@@ -98,6 +98,12 @@ export const generateDerivApiInstance = async (forceNew = false) => {
                 console.log('[DerivAPI] WebSocket connection established');
             });
 
+            // Dispatch every WebSocket message as a window custom event so that
+            // the DONN widget (and any other listener) can receive them.
+            deriv_socket.addEventListener('message', (event) => {
+                window.dispatchEvent(new CustomEvent('newSystemMessage', { detail: event }));
+            });
+
             deriv_socket.addEventListener('error', error => {
                 console.error('[DerivAPI] WebSocket connection error:', error);
             });
